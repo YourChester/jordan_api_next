@@ -1,4 +1,4 @@
-import ErrorController from '../controllers/shared/error_controller.js';
+import ErrorController from '../controllers/shared/errorController.js';
 
 function error_middleware(err, req, res, next) {
 	if (err instanceof ErrorController) {

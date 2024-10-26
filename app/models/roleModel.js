@@ -4,12 +4,11 @@ const role_schema = new Schema(
 	{
 		name: {
 			type: String,
-			required: true,
+			required: [true, 'Обязательное поле'],
 		},
 		key: {
 			type: String,
-			unique: true,
-			required: true,
+			required: [true, 'Обязательное поле'],
 		},
 	},
 	{ timestamps: true }
