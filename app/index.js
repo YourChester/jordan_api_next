@@ -4,7 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 import create_connect_to_database from './database/index.js';
-import error_middleware from './middlewares/error.middleware.js';
+import { errorMiddleware } from './middlewares/index.js';
 import router from './router/index.js';
 
 dotenv.config();
@@ -19,7 +19,7 @@ app.use(expressFileupload({}));
 
 app.use('/api/', router);
 
-app.use(error_middleware);
+app.use(errorMiddleware);
 
 create_connect_to_database(DB_URL)
 	.then(() => {

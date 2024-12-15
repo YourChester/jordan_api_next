@@ -1,6 +1,6 @@
 import ErrorController from '../controllers/shared/errorController.js';
 
-function error_middleware(err, req, res, next) {
+function errorMiddleware(err, req, res, next) {
 	if (err instanceof ErrorController) {
 		const { status, message, errors } = err;
 		return res.status(status).json({
@@ -12,4 +12,4 @@ function error_middleware(err, req, res, next) {
 	return res.status(500).json({ message: 'Непредвиденная ошибка' });
 }
 
-export default error_middleware;
+export default errorMiddleware;

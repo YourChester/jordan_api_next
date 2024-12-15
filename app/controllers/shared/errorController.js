@@ -6,7 +6,7 @@ export default class ErrorController extends Error {
 		this.errors = errors;
 	}
 
-	static bad_request(message) {
+	static badRequest(message) {
 		return new ErrorController(400, message);
 	}
 
@@ -18,11 +18,11 @@ export default class ErrorController extends Error {
 		return new ErrorController(403, message);
 	}
 
-	static not_found(message) {
+	static notFound(message) {
 		return new ErrorController(404, message);
 	}
 
-	static unprocessable_entity(errors = null) {
+	static unprocessableEntity(errors = null) {
 		return new ErrorController(422, 'Unprocessable entity', errors);
 	}
 }
