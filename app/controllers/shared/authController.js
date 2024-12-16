@@ -51,7 +51,10 @@ export default class AuthController {
 
 			const newSession = await SessionRepository.save(session);
 
-			return res.status(200).json(newSession);
+			return res.status(200).json({
+				token: session.token,
+				refresh_token: session.refresh_token,
+			});
 		} catch (errors) {
 			next(errors);
 		}
