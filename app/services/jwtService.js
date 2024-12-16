@@ -8,19 +8,19 @@ export default class JwtService {
 	}
 
 	static decodeToken(token) {
-		let decode_token_user = null;
+		let decodeToken = null;
 		let errors = null;
 
 		jwt.verify(token, process.env.APP_SECRET_KEY, (err, decode) => {
 			if (err) {
 				errors = err;
 			} else {
-				decode_token_user = decode;
+				decodeToken = decode;
 			}
 		});
 
 		return {
-			decode_token_user,
+			decodeToken,
 			errors,
 		};
 	}

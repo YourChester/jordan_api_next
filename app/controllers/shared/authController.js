@@ -2,6 +2,8 @@ import ErrorController from './errorController.js';
 import UserRepository from '../../repositories/userRepository.js';
 import SessionRepository from '../../repositories/sessinonRepository.js';
 import CryptService from '../../services/cryptService.js';
+import JwtService from '../../services/jwtService.js';
+import UserDto from '../../dto/admin/userDto.js';
 
 export default class AuthController {
 	async logIn(req, res, next) {
@@ -18,7 +20,7 @@ export default class AuthController {
 
 			const user = await UserRepository.findOne({ login });
 
-			if (!user) {
+			if (!user || !user.visibility) {
 				throw ErrorController.unprocessableEntity({
 					login: 'Неверный логин',
 				});
@@ -30,22 +32,26 @@ export default class AuthController {
 				});
 			}
 
-			const token = generate_token({
+			const oldSession = await SessionRepository.findOne({
 				user_id: user._id,
-				role_id: user.role_id,
 			});
-			const refresh_token = generate_refresh_token({
-				user_id: user._id,
-				role_id: user.role_id,
+			if (oldSession) {
+				await SessionRepository.delete(oldSession._id);
+			}
+
+			const session = SessionRepository.create();
+
+			session.user_id = user._id;
+			session.token = JwtService.generateToken({
+				session_id: session._id,
+			});
+			session.refresh_token = JwtService.generateRefreshToken({
+				session_id: session._id,
 			});
 
-			const session = SessionRepository.create({
-				user_id: user._id,
-				token,
-				refresh_token,
-			});
+			const newSession = await SessionRepository.save(session);
 
-			return res.status(200).json(session);
+			return res.status(200).json(newSession);
 		} catch (errors) {
 			next(errors);
 		}
@@ -53,17 +59,19 @@ export default class AuthController {
 
 	async logOut(req, res, next) {
 		try {
-			const { user_id } = req.user;
+			const session_id = req.decodeToken.session_id;
 
-			if (!user_id) {
-				throw ErrorController.bad_request('Токен не валиден');
+			if (!session_id) {
+				throw ErrorController.unauthorized('Доступ запрещен');
 			}
 
-			const result = await AuthService.delete_auth(user_id);
+			const session = await SessionRepository.getOne(session_id);
 
-			if (result.deletedCount == 0) {
-				throw ErrorController.bad_request('Токен не валиден');
+			if (!session) {
+				throw ErrorController.unauthorized('Доступ запрещен');
 			}
+
+			await SessionRepository.delete(session_id);
 
 			return res.status(200).json({});
 		} catch (errors) {
@@ -73,27 +81,41 @@ export default class AuthController {
 
 	async userInfo(req, res, next) {
 		try {
-			const { user_id } = req.user;
+			const session_id = req.decodeToken.session_id;
 
-			if (!user_id) {
-				throw ErrorController.bad_request('Токен не валиден');
+			if (!session_id) {
+				throw ErrorController.unauthorized('Доступ запрещен');
 			}
-
-			const user = await UserService.get_one(user_id);
+			const session = await SessionRepository.getOne(session_id);
+			const user = await UserRepository.getOne(session.user_id);
 
 			if (!user) {
-				throw ErrorController.unprocessable_entity({
+				throw ErrorController.unprocessableEntity({
 					base: 'Пользователь не найден',
 				});
 			}
 
-			return res.status(200).json({ user });
+			return res.status(200).json(new UserDto(user));
 		} catch (errors) {
 			next(errors);
 		}
 	}
 
-	checkAuth(req, res) {
-		return res.status(200).json({});
+	async checkAuth(req, res) {
+		try {
+			const session_id = req.decodeToken.session_id;
+
+			const session = await SessionRepository.getOne(session_id);
+
+			if (!session) {
+				throw ErrorController.unprocessableEntity({
+					base: 'Сессия не найден',
+				});
+			}
+
+			return res.status(200).json({});
+		} catch (errors) {
+			next(errors);
+		}
 	}
 }

@@ -1,31 +1,26 @@
-// import { decode_token } from '../helpers/password.helpers.js';
+import ErrorController from '../controllers/shared/errorController.js';
+import JwtService from '../services/jwtService.js';
 
 function authMiddleware(req, res, next) {
 	if (req.method === 'OPTIONS') {
 		next();
 	}
 
-	// const token = req.headers?.authorization?.split(' ')[1] || '';
-	// if (!token) {
-	// 	return res.status(401).json({
-	// 		code: 401,
-	// 		message: 'Unauthorized',
-	// 		errors: { base: 'Доступ запрещен' },
-	// 	});
-	// }
-	// const { decode_token_user, errors } = decode_token(token);
-	// if (errors) {
-	// 	if (errors.name == 'TokenExpiredError') {
-	// 		return res.status(401).json({
-	// 			code: 401,
-	// 			message: 'Unauthorized',
-	// 			errors: { base: 'Токен протух' },
-	// 		});
-	// 	} else {
-	// 		return res.status(500).json(errors);
-	// 	}
-	// }
-	// req.user = decode_token_user;
+	const token = req.headers?.authorization?.split(' ')[1] || '';
+	if (!token) {
+		const error = ErrorController.unauthorized('Доступ запрещен');
+		return res.status(error.status).json(error);
+	}
+	const result = JwtService.decodeToken(token);
+	if (result.errors) {
+		if (result.errors.name == 'TokenExpiredError') {
+			const error = ErrorController.unauthorized('Доступ запрещен');
+			return res.status(error.status).json(error);
+		} else {
+			return res.status(500).json(errors);
+		}
+	}
+	req.decodeToken = result.decodeToken;
 	next();
 }
 

@@ -29,7 +29,7 @@ export default class UserRepository {
 	}
 
 	static async findOne(params) {
-		const row = await User.find(params);
+		const row = await User.findOne(params);
 		return row;
 	}
 
